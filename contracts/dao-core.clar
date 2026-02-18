@@ -95,7 +95,15 @@
         (asserts! (> (get votes-for proposal) (get votes-against proposal)) ERR-QUORUM-NOT-MET)
         
         ;; Logic for execution would go here
-        ;; For now, just mark as executed
+        ;; Support for calling external contract (extensions)
+        (if (is-some (get target-contract proposal))
+            (begin 
+                (print { action: "executing-extension", target: (get target-contract proposal) })
+                ;; In a real ExecutorDAO, this would use a trait to call the execute function
+            )
+            (print { action: "standard-proposal-completed" })
+        )
+        
         (map-set proposals proposal-id (merge proposal { executed: true }))
         (ok true)
     )
