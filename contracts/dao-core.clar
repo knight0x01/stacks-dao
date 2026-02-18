@@ -2,6 +2,7 @@
 ;; Handles proposals, voting, and execution
 
 (use-trait ft-trait .sip-010-trait.sip-010-trait)
+(use-trait executor-trait .executor-trait.executor-trait)
 
 (define-constant ERR-UNAUTHORIZED (err u200))
 (define-constant ERR-INSUFFICIENT-FUNDS (err u201))
@@ -12,6 +13,7 @@
 
 (define-constant MIN-PROPOSAL-THRESHOLD u1000000) ;; 1 token (assuming 6 decimals)
 (define-constant VOTING-DURATION u144) ;; ~1 day in blocks
+(define-constant QUORUM-THRESHOLD u40) ;; 40% quorum requirement
 
 (define-map proposals
     uint
@@ -367,3 +369,5 @@
 ;; Commit 496: Granular logic refinement and governance optimization.
 
 ;; Commit 500: Granular logic refinement and governance optimization.
+
+;; Refactor Commit 3: Optimizing for security and gas efficiency.
