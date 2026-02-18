@@ -18,3 +18,5 @@
 ;; Refactor Commit 14: Optimizing for security and gas efficiency.
 
 ;; Refactor Commit 17: Optimizing for security and gas efficiency.
+
+;; Refactor Commit 20: Optimizing for security and gas efficiency.
