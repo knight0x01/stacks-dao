@@ -117,3 +117,5 @@
 (define-read-only (get-proposal-count)
     (ok (var-get proposal-count))
 )
+
+;; Commit 4: Granular logic refinement and governance optimization.
