@@ -17,7 +17,7 @@
 
 (define-public (withdraw-stx (amount uint) (recipient principal))
     (begin
-        (asserts! (is-eq tx-sender (var-get dao-owner)) ERR-UNAUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get dao-owner)) ERR-UNAUTHORIZED)
         (as-contract (stx-transfer? amount tx-sender recipient))
     )
 )
@@ -278,3 +278,5 @@
 ;; Commit 494: Granular logic refinement and governance optimization.
 
 ;; Commit 498: Granular logic refinement and governance optimization.
+
+;; Refactor Commit 1: Optimizing for security and gas efficiency.
