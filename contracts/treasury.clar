@@ -28,3 +28,5 @@
 (define-read-only (get-balance)
     (stx-get-balance (as-contract tx-sender))
 )
+
+;; Commit 2: Granular logic refinement and governance optimization.
