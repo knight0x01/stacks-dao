@@ -1,0 +1,111 @@
+;; DAO Core Contract
+;; Handles proposals, voting, and execution
+
+(use-trait ft-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+
+(define-constant ERR-UNAUTHORIZED (err u200))
+(define-constant ERR-INSUFFICIENT-FUNDS (err u201))
+(define-constant ERR-PROPOSAL-NOT-FOUND (err u202))
+(define-constant ERR-ALREADY-VOTED (err u203))
+(define-constant ERR-VOTING-CLOSED (err u204))
+(define-constant ERR-QUORUM-NOT-MET (err u205))
+
+(define-constant MIN-PROPOSAL-THRESHOLD u1000000) ;; 1 token (assuming 6 decimals)
+(define-constant VOTING-DURATION u144) ;; ~1 day in blocks
+
+(define-map proposals
+    uint
+    {
+        proposer: principal,
+        title: (string-ascii 64),
+        description: (string-utf8 256),
+        start-block: uint,
+        end-block: uint,
+        votes-for: uint,
+        votes-against: uint,
+        executed: bool,
+        target-contract: (optional principal),
+        function-name: (optional (string-ascii 64))
+    }
+)
+
+(define-map votes
+    { proposal-id: uint, voter: principal }
+    { votes: uint }
+)
+
+(define-data-var proposal-count uint u0)
+
+;; Public functions
+
+(define-public (create-proposal (title (string-ascii 64)) (description (string-utf8 256)) (target (optional principal)) (func (optional (string-ascii 64))))
+    (let
+        (
+            (id (+ (var-get proposal-count) u1))
+            (caller tx-sender)
+        )
+        ;; Check threshold (simplified: assumes caller has tokens in governance-token contract)
+        ;; For now, we trust the caller for the threshold check or implement it via trait
+        (map-set proposals id
+            {
+                proposer: caller,
+                title: title,
+                description: description,
+                start-block: block-height,
+                end-block: (+ block-height VOTING-DURATION),
+                votes-for: u0,
+                votes-against: u0,
+                executed: false,
+                target-contract: target,
+                function-name: func
+            }
+        )
+        (var-set proposal-count id)
+        (ok id)
+    )
+)
+
+(define-public (vote (proposal-id uint) (vote-for bool) (token-contract <ft-trait>))
+    (let
+        (
+            (proposal (unwrap! (map-get? proposals proposal-id) ERR-PROPOSAL-NOT-FOUND))
+            (voter tx-sender)
+            (voter-balance (unwrap-panic (contract-call? token-contract get-balance voter)))
+        )
+        (asserts! (< block-height (get end-block proposal)) ERR-VOTING-CLOSED)
+        (asserts! (is-none (map-get? votes { proposal-id: proposal-id, voter: voter })) ERR-ALREADY-VOTED)
+        
+        (if vote-for
+            (map-set proposals proposal-id (merge proposal { votes-for: (+ (get votes-for proposal) voter-balance) }))
+            (map-set proposals proposal-id (merge proposal { votes-against: (+ (get votes-against proposal) voter-balance) }))
+        )
+        
+        (map-set votes { proposal-id: proposal-id, voter: voter } { votes: voter-balance })
+        (ok true)
+    )
+)
+
+(define-public (execute-proposal (proposal-id uint))
+    (let
+        (
+            (proposal (unwrap! (map-get? proposals proposal-id) ERR-PROPOSAL-NOT-FOUND))
+        )
+        (asserts! (>= block-height (get end-block proposal)) ERR-VOTING-CLOSED)
+        (asserts! (not (get executed proposal)) ERR-UNAUTHORIZED)
+        (asserts! (> (get votes-for proposal) (get votes-against proposal)) ERR-QUORUM-NOT-MET)
+        
+        ;; Logic for execution would go here
+        ;; For now, just mark as executed
+        (map-set proposals proposal-id (merge proposal { executed: true }))
+        (ok true)
+    )
+)
+
+;; Read-only functions
+(define-read-only (get-proposal (id uint))
+    (map-get? proposals id)
+)
+
+(define-read-only (get-proposal-count)
+    (ok (var-get proposal-count))
+)
