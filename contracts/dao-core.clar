@@ -1,7 +1,7 @@
 ;; DAO Core Contract
 ;; Handles proposals, voting, and execution
 
-(use-trait ft-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+(use-trait ft-trait .sip-010-trait.sip-010-trait)
 
 (define-constant ERR-UNAUTHORIZED (err u200))
 (define-constant ERR-INSUFFICIENT-FUNDS (err u201))
@@ -51,8 +51,8 @@
                 proposer: caller,
                 title: title,
                 description: description,
-                start-block: block-height,
-                end-block: (+ block-height VOTING-DURATION),
+                start-block: burn-block-height,
+                end-block: (+ burn-block-height VOTING-DURATION),
                 votes-for: u0,
                 votes-against: u0,
                 executed: false,
@@ -72,7 +72,7 @@
             (voter tx-sender)
             (voter-balance (unwrap-panic (contract-call? token-contract get-balance voter)))
         )
-        (asserts! (< block-height (get end-block proposal)) ERR-VOTING-CLOSED)
+        (asserts! (< burn-block-height (get end-block proposal)) ERR-VOTING-CLOSED)
         (asserts! (is-none (map-get? votes { proposal-id: proposal-id, voter: voter })) ERR-ALREADY-VOTED)
         
         (if vote-for
@@ -90,7 +90,7 @@
         (
             (proposal (unwrap! (map-get? proposals proposal-id) ERR-PROPOSAL-NOT-FOUND))
         )
-        (asserts! (>= block-height (get end-block proposal)) ERR-VOTING-CLOSED)
+        (asserts! (>= burn-block-height (get end-block proposal)) ERR-VOTING-CLOSED)
         (asserts! (not (get executed proposal)) ERR-UNAUTHORIZED)
         (asserts! (> (get votes-for proposal) (get votes-against proposal)) ERR-QUORUM-NOT-MET)
         
@@ -98,10 +98,10 @@
         ;; Support for calling external contract (extensions)
         (if (is-some (get target-contract proposal))
             (begin 
-                (print { action: "executing-extension", target: (get target-contract proposal) })
+                (print { action: "executing-extension", data: (get target-contract proposal) })
                 ;; In a real ExecutorDAO, this would use a trait to call the execute function
             )
-            (print { action: "standard-proposal-completed" })
+            (print { action: "proposal-completed", data: none })
         )
         
         (map-set proposals proposal-id (merge proposal { executed: true }))

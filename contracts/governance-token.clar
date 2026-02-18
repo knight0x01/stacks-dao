@@ -1,7 +1,7 @@
 ;; Governance Token (SIP-010)
 ;; Standard governance token for the DAO
 
-(impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+(impl-trait .sip-010-trait.sip-010-trait)
 
 (define-constant ERR-UNAUTHORIZED (err u100))
 (define-constant ERR-NOT-OWNER (err u101))
@@ -18,7 +18,7 @@
     (begin
         (asserts! (is-eq tx-sender sender) ERR-NOT-OWNER)
         (try! (ft-transfer? gov-token amount sender recipient))
-        (match memo to-print (print to-print) 0)
+        (match memo to-print (begin (print to-print) true) true)
         (ok true)
     )
 )

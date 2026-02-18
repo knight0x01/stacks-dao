@@ -18,7 +18,7 @@
 (define-public (withdraw-stx (amount uint) (recipient principal))
     (begin
         (asserts! (is-eq tx-sender (var-get dao-owner)) ERR-UNAUTHORIZED)
-        (stx-transfer? amount (as-contract tx-sender) recipient)
+        (as-contract (stx-transfer? amount tx-sender recipient))
     )
 )
 
